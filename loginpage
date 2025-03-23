@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-image: url('https://source.unsplash.com/random/1600x900');
+            background-size: cover;
+            background-position: center;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        #signin {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            margin: 100px auto;
+            max-width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        #signin h2 {
+            margin-bottom: 20px;
+            color: #d9534f;
+        }
+
+        #signin form {
+            text-align: left;
+        }
+
+        #signin form label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #d9534f;
+        }
+
+        #signin form input[type="text"],
+        #signin form input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #f0ad4e;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #signin form input[type="submit"] {
+            background-color: #f0ad4e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #signin form input[type="submit"]:hover {
+            background-color: #d9534f;
+        }
+
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <section id="signin">
+        <h2>Sign In</h2>
+        <form id="loginForm" onsubmit="return validateForm()">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required><br><br>
+            <input type="submit" value="Sign In">
+        </form>
+        <p id="message"></p>
+    </section>
+
+    <script>
+        function validateForm() {
+            var username = document.getElementById('username').value.trim(); // Trim spaces
+            var password = document.getElementById('password').value.trim(); // Trim spaces
+            var message = document.getElementById('message');
+
+            if (username === 'chris' && password === '123') {
+                message.textContent = 'Login Successful!';
+                message.className = 'success';
+                setTimeout(() => {
+                    window.location.href = "welcome.html"; // Redirect to another page
+                }, 1000);
+                return false;
+            } else {
+                message.textContent = 'Incorrect username or password. Please try again.';
+                message.className = 'error';
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>
