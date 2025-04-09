@@ -3,68 +3,209 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.secret_key = "your_secret_key"
 
-# Database Configuration
+# -----------------------------
+# Configuration
+# -----------------------------
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(BASE_DIR, 'database.db')}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, 'static', 'uploads')
 
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# -----------------------------
+# Extensions
+# -----------------------------
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
-# Database Model
+# -----------------------------
+# Models
+# -----------------------------
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
 
-# Create Database Tables
+class Mentor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    position = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    image = db.Column(db.String(100), nullable=True)
+
+class GalleryImage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(100), nullable=False)
+
+# -----------------------------
+# Initial Setup
+# -----------------------------
 with app.app_context():
     db.create_all()
-
-    # Add an admin user (if not exists)
     if not Admin.query.filter_by(username="MAIYU").first():
         hashed_password = bcrypt.generate_password_hash("ADMIN").decode("utf-8")
         new_admin = Admin(username="MAIYU", password=hashed_password)
         db.session.add(new_admin)
         db.session.commit()
 
-# Route to Display Login Page
+# -----------------------------
+# Routes
+# -----------------------------
 @app.route('/')
 def login():
     return render_template('login.html')
 
-# Route to Handle Login Form Submission
 @app.route('/login', methods=['POST'])
 def login_post():
     username = request.form['username']
     password = request.form['password']
     user = Admin.query.filter_by(username=username).first()
 
-    if user and bcrypt.check_password_hash(user.password, password):
-        session['admin'] = username
-        flash("Login successful!", "success")
-        return redirect(url_for('dashboard'))
-    else:
-        flash("Invalid username or password!", "danger")
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        flash("Invalid username or password!", "error")
         return redirect(url_for('login'))
 
-# Admin Dashboard Route (After Login)
+    session['admin'] = username
+    flash("Login successful!", "success")
+    return redirect(url_for('dashboard'))
+
 @app.route('/dashboard')
 def dashboard():
     if 'admin' in session:
         return render_template('dashboard.html', username=session['admin'])
-    else:
-        return redirect(url_for('login'))
+    return redirect(url_for('login'))
 
-# Logout Route
 @app.route('/logout')
 def logout():
     session.pop('admin', None)
     flash("You have been logged out.", "info")
     return redirect(url_for('login'))
 
+# -----------------------------
+# Mentor Management
+# -----------------------------
+@app.route('/contact')
+def contact():
+    mentors = Mentor.query.all()
+    return render_template('contact.html', mentors=mentors)
+
+@app.route('/add_mentor', methods=['GET', 'POST'])
+def add_mentor():
+    if 'admin' not in session:
+        flash("Unauthorized access!", "error")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        position = request.form['position']
+        phone = request.form['phone']
+        description = request.form['description']
+        image = request.files.get('image')
+
+        image_filename = None
+        if image and image.filename:
+            image_filename = f"mentor_{name.replace(' ', '_')}.jpg"
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+
+        new_mentor = Mentor(
+            name=name,
+            position=position,
+            phone=phone,
+            description=description,
+            image=f"uploads/{image_filename}" if image_filename else None
+        )
+
+        db.session.add(new_mentor)
+        db.session.commit()
+        flash("Mentor added successfully!", "success")
+        return redirect(url_for('contact'))
+
+    return render_template('add_mentor.html')
+
+@app.route('/update_mentor/<int:mentor_id>', methods=['GET', 'POST'])
+def update_mentor(mentor_id):
+    if 'admin' not in session:
+        flash("Unauthorized access!", "error")
+        return redirect(url_for('login'))
+
+    mentor = Mentor.query.get_or_404(mentor_id)
+
+    if request.method == 'POST':
+        mentor.name = request.form['name']
+        mentor.position = request.form['position']
+        mentor.phone = request.form['phone']
+        mentor.description = request.form['description']
+
+        image = request.files.get('image')
+        if image and image.filename:
+            image_filename = f"mentor_{mentor_id}.jpg"
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+            mentor.image = f"uploads/{image_filename}"
+
+        db.session.commit()
+        flash("Mentor details updated successfully!", "success")
+        return redirect(url_for('contact'))
+
+    return render_template('update_mentor.html', mentor=mentor)
+
+# -----------------------------
+# Gallery Management
+# -----------------------------
+@app.route('/gallery')
+def gallery():
+    images = GalleryImage.query.all()
+    return render_template('gallery.html', images=images)
+
+@app.route('/add_image', methods=['GET', 'POST'])
+def add_image():
+    if 'admin' not in session:
+        flash("Unauthorized access!", "error")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        file = request.files['image']
+        if file and file.filename:
+            filename = f"gallery_{file.filename}"
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            new_image = GalleryImage(filename=f"uploads/{filename}")
+            db.session.add(new_image)
+            db.session.commit()
+            flash("Image added to gallery!", "success")
+            return redirect(url_for('gallery'))
+
+    return render_template('add_image.html')
+
+@app.route('/delete_image/<int:image_id>', methods=['POST'])
+def delete_image(image_id):
+    if 'admin' not in session:
+        flash("Unauthorized access!", "error")
+        return redirect(url_for('login'))
+
+    image = GalleryImage.query.get_or_404(image_id)
+    try:
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image.filename)))
+    except:
+        pass
+
+    db.session.delete(image)
+    db.session.commit()
+    flash("Image deleted from gallery!", "success")
+    return redirect(url_for('gallery'))
+
+# -----------------------------
+# Static Pages
+# -----------------------------
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+# -----------------------------
+# Run Server
+# -----------------------------
 if __name__ == '__main__':
     app.run(debug=True)

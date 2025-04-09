@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Mentors</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url("{{ url_for('static', filename='contactus.jpg') }}") no-repeat center center fixed;
+            background-size: cover;
+            text-align: center;
+            color: black;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+            background: rgba(255, 248, 235, 0.9);
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            margin-top: 50px;
+        }
+        .mentor-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .mentor {
+            width: 280px;
+            margin: 15px;
+            padding: 15px;
+            background: white;
+            box-shadow: 0px 0px 5px rgba(0,0,0,0.2);
+            border-radius: 12px;
+            text-align: center;
+        }
+        .mentor img {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #d2a679;
+        }
+        .mentor h3 {
+            margin: 10px 0 5px;
+            color: #5e3c2c;
+        }
+        .mentor p {
+            font-size: 14px;
+            color: #444;
+            margin: 5px 10px;
+        }
+        .update-btn {
+            display: inline-block;
+            margin: 5px 3px 0;
+            padding: 6px 10px;
+            background-color: #8b5e3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .update-btn:hover {
+            background-color: #5e3c2c;
+        }
+
+        .flash-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            width: fit-content;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Our Mentors</h2>
+
+        <!-- Flash message -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                    <script>
+                        setTimeout(function() {
+                            document.querySelector('.flash-message').style.display = 'none';
+                        }, 3000); // Hide after 3 seconds
+                    </script>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="mentor-list">
+            {% if mentors %}
+                {% for mentor in mentors %}
+                <div class="mentor">
+                    <img src="{{ url_for('static', filename=mentor.image) if mentor.image else url_for('static', filename='default.jpg') }}" alt="{{ mentor.name }}">
+                    <h3>{{ mentor.name }}</h3>
+                    <p><strong>{{ mentor.position }}</strong></p>
+                    <p>{{ mentor.description }}</p>
+                    <p>Contact: {{ mentor.phone }}</p>
+
+                    {% if session.get('admin') %}
+                        <a href="{{ url_for('update_mentor', mentor_id=mentor.id) }}" class="update-btn">Update</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No mentors found. Please add one.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

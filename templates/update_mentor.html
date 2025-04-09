@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Mentor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4e1d2;
+            text-align: center;
+        }
+        .container {
+            width: 50%;
+            margin: 40px auto;
+            padding: 25px;
+            background: white;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        input, textarea {
+            width: 90%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            text-align: left;
+            margin: 8px 0 5px 25px;
+            font-weight: bold;
+            color: #5e3c2c;
+        }
+        .img-preview {
+            margin-top: 10px;
+        }
+        .img-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #8b5e3c;
+        }
+        button {
+            background-color: #8b5e3c;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .cancel-btn {
+            background-color: red;
+        }
+        .cancel-btn a {
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Update Mentor Details</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <label for="name">Name:</label>
+            <input type="text" name="name" id="name" value="{{ mentor.name }}" required>
+
+            <label for="position">Position:</label>
+            <input type="text" name="position" id="position" value="{{ mentor.position }}" required>
+
+            <label for="phone">Phone:</label>
+            <input type="text" name="phone" id="phone" value="{{ mentor.phone }}" required>
+
+            <label for="description">Description:</label>
+            <textarea name="description" id="description" required>{{ mentor.description }}</textarea>
+
+            <label for="image">Update Image:</label>
+            <input type="file" name="image" id="image">
+
+            {% if mentor.image %}
+            <div class="img-preview">
+                <p>Current Image:</p>
+                <img src="{{ url_for('static', filename=mentor.image) }}" alt="Mentor Image">
+            </div>
+            {% endif %}
+
+            <div>
+                <button type="submit">Update</button>
+                <button class="cancel-btn">
+                    <a href="{{ url_for('contact') }}">Cancel</a>
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hopeworks Foundation</title>
+    <title>Hopeworks Foundation - Login</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 
     <style>
         body {
-            background-image: url('loginimage.png'); /* Ensure the image is in the same directory */
+            background-image: url("{{ url_for('static', filename='loginimage.png') }}");
             background-size: cover;
             background-position: center;
             font-family: Arial, sans-serif;
@@ -49,38 +49,45 @@
         .message {
             margin-top: 10px;
             font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
         }
         .success {
             color: green;
+            background-color: #d4edda;
         }
         .error {
             color: red;
+            background-color: #f8d7da;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h2>Welcome to Hopeworks Foundation</h2>
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button onclick="validateLogin()">Login</button>
-        <p id="message" class="message"></p>
+
+        <!-- Flash messages from Flask -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="message {{ category }}">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login_post') }}">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
     </div>
 
     <script>
-        function validateLogin() {
-            var username = document.getElementById("username").value;
-            var password = document.getElementById("password").value;
-            var message = document.getElementById("message");
-
-            if (username === "admin" && password === "password123") {
-                message.textContent = "Login Successful";
-                message.className = "message success";
-            } else {
-                message.textContent = "User Login Failed";
-                message.className = "message error";
-            }
-        }
+        // Auto-hide flash messages after 3 seconds
+        setTimeout(() => {
+            let messages = document.querySelectorAll('.message');
+            messages.forEach(msg => msg.style.display = 'none');
+        }, 3000);
     </script>
 </body>
 </html>
