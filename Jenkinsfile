@@ -16,31 +16,31 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                bat 'docker build -t %IMAGE_NAME% .'
             }
         }
 
         stage('Stop Old Container') {
             steps {
-                sh 'docker stop $CONTAINER_NAME || true'
+                bat 'docker stop %CONTAINER_NAME% || true'
             }
         }
 
         stage('Remove Old Container') {
             steps {
-                sh 'docker rm $CONTAINER_NAME || true'
+                bat 'docker rm %CONTAINER_NAME% || true'
             }
         }
 
         stage('Run New Container') {
             steps {
-                sh 'docker run -d -p $PORT:$PORT --name $CONTAINER_NAME $IMAGE_NAME'
+                bat 'docker run -d -p %PORT%:%PORT% --name %CONTAINER_NAME% %IMAGE_NAME%'
             }
         }
 
         stage('List Running Containers') {
             steps {
-                sh 'docker ps'
+                bat 'docker ps'
             }
         }
     }
