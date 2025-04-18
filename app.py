@@ -67,7 +67,7 @@ def login_post():
     user = Admin.query.filter_by(username=username).first()
 
     if not user or not bcrypt.check_password_hash(user.password, password):
-        flash("Invalid username or password!", "error")
+        flash("Invalid username or password!", "danger")
         return redirect(url_for('login'))
 
     session['admin'] = username
@@ -97,7 +97,7 @@ def contact():
 @app.route('/add_mentor', methods=['GET', 'POST'])
 def add_mentor():
     if 'admin' not in session:
-        flash("Unauthorized access!", "error")
+        flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
     if request.method == 'POST':
@@ -130,7 +130,7 @@ def add_mentor():
 @app.route('/update_mentor/<int:mentor_id>', methods=['GET', 'POST'])
 def update_mentor(mentor_id):
     if 'admin' not in session:
-        flash("Unauthorized access!", "error")
+        flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
     mentor = Mentor.query.get_or_404(mentor_id)
@@ -164,7 +164,7 @@ def gallery():
 @app.route('/add_image', methods=['GET', 'POST'])
 def add_image():
     if 'admin' not in session:
-        flash("Unauthorized access!", "error")
+        flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
     if request.method == 'POST':
@@ -183,14 +183,14 @@ def add_image():
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
 def delete_image(image_id):
     if 'admin' not in session:
-        flash("Unauthorized access!", "error")
+        flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
     image = GalleryImage.query.get_or_404(image_id)
     try:
         os.remove(os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image.filename)))
-    except:
-        pass
+    except Exception as e:
+        print(f"Error deleting file: {e}")
 
     db.session.delete(image)
     db.session.commit()
@@ -205,7 +205,7 @@ def about():
     return render_template('about.html')
 
 # -----------------------------
-# Run Server
+# Run Server (updated for Docker)
 # -----------------------------
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
