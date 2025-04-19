@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from werkzeug.utils import secure_filename
 import os
 
 app = Flask(__name__, static_url_path='/static')
@@ -13,7 +14,6 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(BASE_DIR, 'database.db')}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, 'static', 'uploads')
-
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # -----------------------------
@@ -76,7 +76,7 @@ def login_post():
 
 @app.route('/dashboard')
 def dashboard():
-    if 'admin' in session:
+    if session.get('admin'):
         return render_template('dashboard.html', username=session['admin'])
     return redirect(url_for('login'))
 
@@ -96,7 +96,7 @@ def contact():
 
 @app.route('/add_mentor', methods=['GET', 'POST'])
 def add_mentor():
-    if 'admin' not in session:
+    if not session.get('admin'):
         flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
@@ -109,7 +109,8 @@ def add_mentor():
 
         image_filename = None
         if image and image.filename:
-            image_filename = f"mentor_{name.replace(' ', '_')}.jpg"
+            safe_name = secure_filename(image.filename)
+            image_filename = f"mentor_{safe_name}"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
         new_mentor = Mentor(
@@ -129,7 +130,7 @@ def add_mentor():
 
 @app.route('/update_mentor/<int:mentor_id>', methods=['GET', 'POST'])
 def update_mentor(mentor_id):
-    if 'admin' not in session:
+    if not session.get('admin'):
         flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
@@ -143,7 +144,8 @@ def update_mentor(mentor_id):
 
         image = request.files.get('image')
         if image and image.filename:
-            image_filename = f"mentor_{mentor_id}.jpg"
+            safe_name = secure_filename(image.filename)
+            image_filename = f"mentor_{mentor_id}_{safe_name}"
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
             mentor.image = f"uploads/{image_filename}"
 
@@ -163,14 +165,15 @@ def gallery():
 
 @app.route('/add_image', methods=['GET', 'POST'])
 def add_image():
-    if 'admin' not in session:
+    if not session.get('admin'):
         flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
     if request.method == 'POST':
         file = request.files['image']
         if file and file.filename:
-            filename = f"gallery_{file.filename}"
+            safe_name = secure_filename(file.filename)
+            filename = f"gallery_{safe_name}"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             new_image = GalleryImage(filename=f"uploads/{filename}")
             db.session.add(new_image)
@@ -182,15 +185,18 @@ def add_image():
 
 @app.route('/delete_image/<int:image_id>', methods=['POST'])
 def delete_image(image_id):
-    if 'admin' not in session:
+    if not session.get('admin'):
         flash("Unauthorized access!", "danger")
         return redirect(url_for('login'))
 
     image = GalleryImage.query.get_or_404(image_id)
-    try:
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image.filename)))
-    except Exception as e:
-        print(f"Error deleting file: {e}")
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image.filename))
+
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            print(f"Error deleting file: {e}")
 
     db.session.delete(image)
     db.session.commit()
@@ -205,7 +211,7 @@ def about():
     return render_template('about.html')
 
 # -----------------------------
-# Run Server (updated for Docker)
+# Run Server
 # -----------------------------
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

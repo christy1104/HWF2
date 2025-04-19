@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Mentor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4e1d2;
             text-align: center;
+            position: relative; /* Added to allow absolute positioning inside */
         }
         .container {
             width: 50%;
@@ -60,9 +62,26 @@
             color: white;
             text-decoration: none;
         }
+        .home-icon {
+            font-size: 20px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #8b5e3c;
+            cursor: pointer;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 30px;
+            text-decoration: none;
+            z-index: 10;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
+    <a href="{{ url_for('dashboard') }}" class="home-icon">
+        <i class="fas fa-home"></i> Home
+    </a>
     <div class="container">
         <h2>Update Mentor Details</h2>
         <form method="POST" enctype="multipart/form-data">
